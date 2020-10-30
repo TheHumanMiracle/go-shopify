@@ -23,6 +23,7 @@ type CustomerService interface {
 	Delete(int64) error
 	ListOrders(int64, interface{}) ([]Order, error)
 	ListTags(interface{}) ([]string, error)
+	SendInvite(int64, CustomerInvite) (*CustomerInvite, error)
 
 	// MetafieldsService used for Customer resource to communicate with Metafields resource
 	MetafieldsService
@@ -59,6 +60,14 @@ type Customer struct {
 	Metafields          []Metafield        `json:"metafields,omitempty"`
 }
 
+type CustomerInvite struct {
+	To            string   `json:"to,omitempty"`
+	From          string   `json:"from,omitempty"`
+	Subject       string   `json:"subject,omitempty"`
+	CustomMessage string   `json:"custom_message,omitempty"`
+	Bcc           []string `json:"bcc,omitempty"`
+}
+
 // Represents the result from the customers/X.json endpoint
 type CustomerResource struct {
 	Customer *Customer `json:"customer"`
@@ -72,6 +81,10 @@ type CustomersResource struct {
 // Represents the result from the customers/tags.json endpoint
 type CustomerTagsResource struct {
 	Tags []string `json:"tags"`
+}
+
+type CustomerInviteResource struct {
+	CustomerInvite *CustomerInvite `json:"customer_invite"`
 }
 
 // Represents the options available when searching for a customer
@@ -151,6 +164,14 @@ func (s *CustomerServiceOp) ListTags(options interface{}) ([]string, error) {
 	resource := new(CustomerTagsResource)
 	err := s.client.Get(path, resource, options)
 	return resource.Tags, err
+}
+
+func (s *CustomerServiceOp) SendInvite(customerID int64, customerInvite CustomerInvite) (*CustomerInvite, error) {
+	path := fmt.Sprintf("%s/%d/send_invite.json", customersBasePath, customerID)
+	wrappedData := CustomerInviteResource{CustomerInvite: &customerInvite}
+	resource := new(CustomerInviteResource)
+	err := s.client.Post(path, wrappedData, resource)
+	return resource.CustomerInvite, err
 }
 
 // List metafields for a customer
